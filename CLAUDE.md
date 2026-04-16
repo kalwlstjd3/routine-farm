@@ -1,5 +1,5 @@
-@docs/skills/apps-in-toss.md
-@docs/skills/tds-mobile.md
+<!-- @docs/skills/apps-in-toss.md -->
+<!-- @docs/skills/tds-mobile.md -->
 
 ## 앱 정보: 루티팜 (RoutineFarm)
 
