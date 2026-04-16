@@ -2,8 +2,10 @@ import "./App.css";
 import { AppStorage as Storage } from "./utils/storage";
 import { type Mission } from "./data/missions";
 import { useRoutineStorage } from "./hooks/useRoutineStorage";
+import { useTodayMission } from "./hooks/useTodayMission";
 import { HomePage } from "./pages/HomePage";
 import { MissionListPage } from "./pages/MissionListPage";
+import { MissionSelectPage } from "./pages/MissionSelectPage";
 import { ONBOARDING_KEY, OnboardingPage } from "./pages/OnboardingPage";
 import { TimerPage } from "./pages/TimerPage";
 import { useEffect, useState } from "react";
@@ -12,12 +14,14 @@ type Route =
   | { page: "loading" }
   | { page: "onboarding" }
   | { page: "home" }
+  | { page: "mission-select" }
   | { page: "missions" }
   | { page: "timer"; mission: Mission };
 
 function App() {
   const [route, setRoute] = useState<Route>({ page: "loading" });
   const { completeMission } = useRoutineStorage();
+  const { todayMission, saveTodayMission } = useTodayMission();
 
   // 앱 최초 진입 시 온보딩 완료 여부 확인
   useEffect(() => {
@@ -27,12 +31,24 @@ function App() {
   }, []);
 
   if (route.page === "loading") {
-    // Storage 읽는 동안 빈 화면 (깜빡임 방지)
     return null;
   }
 
   if (route.page === "onboarding") {
     return <OnboardingPage onDone={() => setRoute({ page: "home" })} />;
+  }
+
+  if (route.page === "mission-select") {
+    return (
+      <MissionSelectPage
+        initialMission={todayMission}
+        onConfirm={async (mission) => {
+          await saveTodayMission(mission);
+          setRoute({ page: "home" });
+        }}
+        onBack={() => setRoute({ page: "home" })}
+      />
+    );
   }
 
   if (route.page === "missions") {
@@ -52,12 +68,17 @@ function App() {
           completeMission();
           setRoute({ page: "home" });
         }}
-        onBack={() => setRoute({ page: "missions" })}
+        onBack={() => setRoute({ page: "home" })}
       />
     );
   }
 
-  return <HomePage onMissionListOpen={() => setRoute({ page: "missions" })} />;
+  return (
+    <HomePage
+      onMissionSelectOpen={() => setRoute({ page: "mission-select" })}
+      onMissionStart={(mission) => setRoute({ page: "timer", mission })}
+    />
+  );
 }
 
 export default App;

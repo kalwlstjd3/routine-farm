@@ -66,9 +66,9 @@ export function MissionListPage({ onMissionSelect, onBack }: MissionListPageProp
             ← 뒤로
           </TextButton>
         }
-        title={<Top.TitleParagraph size={22}>미션 목록</Top.TitleParagraph>}
+        title={<Top.TitleParagraph size={22} style={{ lineHeight: 1.4 }}>미션 목록</Top.TitleParagraph>}
         subtitleBottom={
-          <Top.SubtitleParagraph size={15} style={{ color: colors.grey500 }}>
+          <Top.SubtitleParagraph size={15} style={{ color: colors.grey500, lineHeight: 1.6, marginTop: 4 }}>
             오늘 할 미션을 선택하세요
           </Top.SubtitleParagraph>
         }

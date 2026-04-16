@@ -35,6 +35,13 @@ export function TimerPage({ mission, onComplete, onBack }: TimerPageProps) {
     };
   }, []);
 
+  // 타이머 완료 시 1.5초 후 자동으로 완료 처리
+  useEffect(() => {
+    if (!isDone) return;
+    const timeout = setTimeout(() => onComplete(), 1500);
+    return () => clearTimeout(timeout);
+  }, [isDone]);
+
   const progress = secondsLeft / TOTAL_SECONDS;
   const dashOffset = CIRCUMFERENCE * (1 - progress);
 
@@ -55,9 +62,9 @@ export function TimerPage({ mission, onComplete, onBack }: TimerPageProps) {
             ← 뒤로
           </TextButton>
         }
-        title={<Top.TitleParagraph size={22}>{mission.title}</Top.TitleParagraph>}
+        title={<Top.TitleParagraph size={22} style={{ lineHeight: 1.4 }}>{mission.title}</Top.TitleParagraph>}
         subtitleBottom={
-          <Top.SubtitleParagraph size={15} style={{ color: colors.grey500 }}>
+          <Top.SubtitleParagraph size={15} style={{ color: colors.grey500, lineHeight: 1.6, marginTop: 4 }}>
             {mission.description}
           </Top.SubtitleParagraph>
         }
@@ -72,57 +79,63 @@ export function TimerPage({ mission, onComplete, onBack }: TimerPageProps) {
           padding: '48px 24px 40px',
         }}
       >
-        <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}>
-          {/* 배경 트랙 */}
-          <circle
-            cx={70}
-            cy={70}
-            r={RADIUS}
-            fill="none"
-            stroke={colors.grey100}
-            strokeWidth={10}
-          />
-          {/* 진행 호 */}
-          <circle
-            cx={70}
-            cy={70}
-            r={RADIUS}
-            fill="none"
-            stroke={isDone ? '#4CAF50' : '#FF8A65'}
-            strokeWidth={10}
-            strokeLinecap="round"
-            strokeDasharray={CIRCUMFERENCE}
-            strokeDashoffset={dashOffset}
-            style={{ transition: 'stroke-dashoffset 0.8s linear' }}
-          />
-        </svg>
-
-        {/* 숫자 시계 (SVG 위에 absolute) */}
-        <div
-          style={{
-            marginTop: -96,
-            fontSize: 36,
-            fontWeight: 700,
-            color: isDone ? '#4CAF50' : colors.grey900,
-            letterSpacing: 2,
-          }}
-        >
-          {isDone ? '완료!' : timeLabel}
+        {/* SVG + 숫자 겹치기 */}
+        <div style={{ position: 'relative', width: 140, height: 140 }}>
+          <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}>
+            {/* 배경 트랙 */}
+            <circle
+              cx={70}
+              cy={70}
+              r={RADIUS}
+              fill="none"
+              stroke={colors.grey100}
+              strokeWidth={10}
+            />
+            {/* 진행 호 */}
+            <circle
+              cx={70}
+              cy={70}
+              r={RADIUS}
+              fill="none"
+              stroke={isDone ? '#4CAF50' : '#FF8A65'}
+              strokeWidth={10}
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={dashOffset}
+              style={{ transition: 'stroke-dashoffset 0.8s linear' }}
+            />
+          </svg>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 22,
+              fontWeight: 700,
+              color: isDone ? '#4CAF50' : colors.grey900,
+              letterSpacing: 1,
+            }}
+          >
+            {isDone ? '완료!' : timeLabel}
+          </div>
         </div>
 
-        <div style={{ marginTop: 100, fontSize: 14, color: colors.grey500 }}>
+        <div style={{ marginTop: 24, fontSize: 14, color: colors.grey500 }}>
           {isDone ? '미션을 성공적으로 완료했어요 🎉' : '미션을 수행하는 동안 타이머가 돌아가요'}
         </div>
       </div>
 
-      {/* 완료 버튼 */}
+      {/* 완료하기 버튼 */}
       <div style={{ padding: '0 24px 32px' }}>
         <Button
           size="large"
           style={{ width: '100%' }}
+          disabled={!isDone}
           onClick={onComplete}
         >
-          {isDone ? '홈으로 돌아가기 🏠' : '완료하기 ✓'}
+          완료하기 ✓
         </Button>
       </div>
     </>

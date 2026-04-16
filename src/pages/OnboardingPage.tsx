@@ -24,10 +24,10 @@ export function OnboardingPage({ onDone }: OnboardingPageProps) {
     <>
       <Top
         title={
-          <Top.TitleParagraph size={24}>루티팜에 오신 걸 환영해요!</Top.TitleParagraph>
+          <Top.TitleParagraph size={24} style={{ lineHeight: 1.4 }}>루티팜에 오신 걸 환영해요!</Top.TitleParagraph>
         }
         subtitleBottom={
-          <Top.SubtitleParagraph size={15} style={{ color: colors.grey500 }}>
+          <Top.SubtitleParagraph size={15} style={{ color: colors.grey500, lineHeight: 1.6, marginTop: 8 }}>
             매일 1분으로 건강한 습관을 키워보세요
           </Top.SubtitleParagraph>
         }
@@ -38,7 +38,7 @@ export function OnboardingPage({ onDone }: OnboardingPageProps) {
         style={{
           display: 'flex',
           justifyContent: 'center',
-          padding: '24px 0 8px',
+          padding: '12px 0 4px',
         }}
       >
         <div
@@ -63,8 +63,8 @@ export function OnboardingPage({ onDone }: OnboardingPageProps) {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 16,
-          padding: '32px 24px',
+          gap: 8,
+          padding: '12px 24px',
         }}
       >
         {STEPS.map((step, i) => (
@@ -74,7 +74,7 @@ export function OnboardingPage({ onDone }: OnboardingPageProps) {
               display: 'flex',
               alignItems: 'center',
               gap: 16,
-              padding: '20px',
+              padding: '14px 16px',
               borderRadius: 16,
               backgroundColor: colors.grey50,
             }}
