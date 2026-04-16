@@ -42,16 +42,26 @@ export function useRoutineStorage() {
 
   useEffect(() => {
     async function load() {
-      const [streakRaw, characterRaw, missionDoneRaw] = await Promise.all([
+      const [streakRaw, missionDoneRaw] = await Promise.all([
         Storage.getItem(KEYS.STREAK),
-        Storage.getItem(KEYS.CHARACTER),
         Storage.getItem(KEYS.MISSION_DONE),
       ]);
 
       const streak = streakRaw != null ? parseInt(streakRaw, 10) : 0;
-      const missionDoneToday = missionDoneRaw === getTodayDate();
-      const character: CharacterState =
-        (characterRaw as CharacterState | null) ?? 'egg';
+      const today = getTodayDate();
+      const missionDoneToday = missionDoneRaw === today;
+
+      const daysSinceLastMission = missionDoneRaw == null
+        ? Infinity
+        : Math.floor(
+            (new Date(today).getTime() - new Date(missionDoneRaw).getTime()) /
+            (1000 * 60 * 60 * 24)
+          );
+
+      const character = resolveCharacter(streak, daysSinceLastMission);
+
+      // 재계산한 캐릭터 상태를 Storage에도 반영
+      await Storage.setItem(KEYS.CHARACTER, character);
 
       setState({ streak, character, missionDoneToday });
       setLoading(false);
