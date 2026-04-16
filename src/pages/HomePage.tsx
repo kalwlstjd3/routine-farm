@@ -1,6 +1,12 @@
 import { colors } from "@toss/tds-colors";
 import { Button, List, ListRow, Top } from "@toss/tds-mobile";
+import { useEffect } from "react";
+import { useBannerAd } from "../hooks/useBannerAd";
+import { useInAppAds } from "../hooks/useInAppAds";
 import { type CharacterState, useRoutineStorage } from "../hooks/useRoutineStorage";
+
+const BANNER_AD_ID = "ait-ad-test-banner-id";
+const REWARDED_AD_ID = "ait-ad-test-rewarded-id";
 
 const TODAY_MISSION = {
   category: "스트레칭/운동",
@@ -23,10 +29,24 @@ interface HomePageProps {
 }
 
 export function HomePage({ onMissionListOpen }: HomePageProps) {
-  const { streak, character, missionDoneToday, loading, completeMission } =
+  const { streak, character, missionDoneToday, loading, completeMission, feedCharacter } =
     useRoutineStorage();
 
   const stage = CHARACTER_INFO[character];
+  const isHungry = character === "hungry" || character === "fainted";
+
+  // 배너 광고
+  const { containerRef: bannerRef, isSupported: isBannerSupported } = useBannerAd(BANNER_AD_ID);
+
+  // 보상형 광고 (밥 주기)
+  const { showAd: showRewardedAd, lastReward } = useInAppAds(REWARDED_AD_ID);
+
+  // 보상 지급 시 캐릭터 밥 주기
+  useEffect(() => {
+    if (lastReward != null) {
+      feedCharacter();
+    }
+  }, [lastReward]);
 
   return (
     <>
@@ -74,6 +94,19 @@ export function HomePage({ onMissionListOpen }: HomePageProps) {
         >
           {stage.label}
         </div>
+
+        {/* 광고 보고 캐릭터 밥 주기 — hungry/fainted 상태일 때만 표시 */}
+        {isHungry && (
+          <Button
+            size="small"
+            color="dark"
+            variant="weak"
+            onClick={showRewardedAd}
+            style={{ marginTop: 4 }}
+          >
+            📺 광고 보고 캐릭터 밥 주기
+          </Button>
+        )}
       </div>
 
       {/* 스트릭 카드 */}
@@ -96,7 +129,7 @@ export function HomePage({ onMissionListOpen }: HomePageProps) {
               marginBottom: 4,
             }}
           >
-            오늘의 스트릭
+            연속 달성 일수
           </div>
           <div
             style={{
@@ -178,7 +211,7 @@ export function HomePage({ onMissionListOpen }: HomePageProps) {
       </div>
 
       {/* 미션 완료 버튼 */}
-      <div style={{ padding: "0 24px 32px" }}>
+      <div style={{ padding: "0 24px", paddingBottom: isBannerSupported ? 80 : 32 }}>
         <Button
           size="large"
           style={{ width: "100%" }}
@@ -189,6 +222,22 @@ export function HomePage({ onMissionListOpen }: HomePageProps) {
           {missionDoneToday ? "오늘 미션 완료! ✓" : "미션 완료 ✓"}
         </Button>
       </div>
+
+      {/* 배너 광고 — 하단 고정 */}
+      <div
+        ref={bannerRef}
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          minHeight: isBannerSupported ? 50 : 0,
+          backgroundColor: isBannerSupported ? colors.grey50 : "transparent",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      />
     </>
   );
 }

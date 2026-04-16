@@ -4,7 +4,8 @@
       "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); [print\\(k,':', p[k]\\) for k in ['main','module','exports','types'] if k in p]\")",
       "Bash(grep -E \"\\\\.d\\\\.ts$\")",
       "Bash(grep -v \"^--$\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(xargs grep *)"
     ]
   }
 }

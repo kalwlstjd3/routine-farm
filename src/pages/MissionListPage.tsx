@@ -1,5 +1,5 @@
-import { Storage } from '@apps-in-toss/web-framework';
 import { colors } from '@toss/tds-colors';
+import { AppStorage as Storage } from '../utils/storage';
 import { BottomSheet, Button, List, ListRow, Tab, TextButton, TextField, Top } from '@toss/tds-mobile';
 import { useEffect, useState } from 'react';
 import { CATEGORIES, DEFAULT_MISSIONS, type Category, type Mission } from '../data/missions';

@@ -1,10 +1,11 @@
-import { Storage } from '@apps-in-toss/web-framework';
 import { useCallback, useEffect, useState } from 'react';
+import { AppStorage as Storage } from '../utils/storage';
 
 const KEYS = {
   STREAK: 'streak',
   CHARACTER: 'character',
   MISSION_DONE: 'mission_done',
+  LAST_FED: 'last_fed',
 } as const;
 
 export type CharacterState = 'egg' | 'hatching' | 'chick' | 'chicken' | 'hungry' | 'fainted';
@@ -42,21 +43,30 @@ export function useRoutineStorage() {
 
   useEffect(() => {
     async function load() {
-      const [streakRaw, missionDoneRaw] = await Promise.all([
+      const [streakRaw, missionDoneRaw, lastFedRaw] = await Promise.all([
         Storage.getItem(KEYS.STREAK),
         Storage.getItem(KEYS.MISSION_DONE),
+        Storage.getItem(KEYS.LAST_FED),
       ]);
 
       const streak = streakRaw != null ? parseInt(streakRaw, 10) : 0;
       const today = getTodayDate();
       const missionDoneToday = missionDoneRaw === today;
 
-      const daysSinceLastMission = missionDoneRaw == null
+      const daysSinceMission = missionDoneRaw == null
         ? Infinity
         : Math.floor(
             (new Date(today).getTime() - new Date(missionDoneRaw).getTime()) /
             (1000 * 60 * 60 * 24)
           );
+      const daysSinceFed = lastFedRaw == null
+        ? Infinity
+        : Math.floor(
+            (new Date(today).getTime() - new Date(lastFedRaw).getTime()) /
+            (1000 * 60 * 60 * 24)
+          );
+      // 미션 완료 또는 밥 주기 중 더 최근 활동 기준으로 캐릭터 상태 결정
+      const daysSinceLastMission = Math.min(daysSinceMission, daysSinceFed);
 
       const character = resolveCharacter(streak, daysSinceLastMission);
 
@@ -101,5 +111,19 @@ export function useRoutineStorage() {
     });
   }, [state.streak]);
 
-  return { ...state, loading, completeMission };
+  /**
+   * 광고 시청 보상으로 캐릭터에게 밥을 줘요.
+   * 스트릭은 유지하되 hungry/fainted 상태를 해제해요.
+   */
+  const feedCharacter = useCallback(async () => {
+    const today = getTodayDate();
+    const newCharacter = resolveCharacter(state.streak, 0);
+    await Promise.all([
+      Storage.setItem(KEYS.CHARACTER, newCharacter),
+      Storage.setItem(KEYS.LAST_FED, today),
+    ]);
+    setState((prev) => ({ ...prev, character: newCharacter }));
+  }, [state.streak]);
+
+  return { ...state, loading, completeMission, feedCharacter };
 }
