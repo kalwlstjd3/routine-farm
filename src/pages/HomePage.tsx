@@ -18,7 +18,11 @@ const CHARACTER_INFO: Record<CharacterState, { emoji: string; label: string; bg:
   fainted:  { emoji: "😵", label: "기절",     bg: "#F5F5F5" },
 };
 
-export function HomePage() {
+interface HomePageProps {
+  onMissionListOpen: () => void;
+}
+
+export function HomePage({ onMissionListOpen }: HomePageProps) {
   const { streak, character, missionDoneToday, loading, completeMission } =
     useRoutineStorage();
 
@@ -132,6 +136,7 @@ export function HomePage() {
         </div>
         <ListRow
           verticalPadding="large"
+          onClick={onMissionListOpen}
           contents={
             <ListRow.Texts
               type="2RowTypeA"
