@@ -62,13 +62,12 @@ export function useRoutineStorage() {
             (new Date(today).getTime() - new Date(missionDoneRaw).getTime()) /
             (1000 * 60 * 60 * 24)
           );
-      const daysSinceFed = lastFedRaw == null
-        ? Infinity
-        : Math.floor(
-            (new Date(today).getTime() - new Date(lastFedRaw).getTime()) /
-            (1000 * 60 * 60 * 24)
-          );
-      const daysSinceLastMission = Math.min(daysSinceMission, daysSinceFed);
+      // last_fed는 "오늘 밥을 줬는가"만 체크.
+      // 오늘 먹였으면 오늘은 배고프지 않고, 내일부터는 mission_done 기준으로 재계산.
+      // Math.min 방식은 last_fed가 오래됐어도 daysSinceMission을 억제해
+      // fainted를 잘못 막는 부작용이 있어 제거.
+      const wasFedToday = lastFedRaw === today;
+      const daysSinceLastMission = wasFedToday ? 0 : daysSinceMission;
 
       const growthStage = resolveGrowthStage(streak, daysSinceLastMission);
 
