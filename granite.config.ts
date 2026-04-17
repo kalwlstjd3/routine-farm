@@ -3,9 +3,9 @@ import { defineConfig } from "@apps-in-toss/web-framework/config";
 export default defineConfig({
   appName: "routine-farm",
   brand: {
-    displayName: "앱 이름", // 화면에 노출될 앱의 한글 이름으로 바꿔주세요.
-    primaryColor: "#FF8A65", // 화면에 노출될 앱의 기본 색상으로 바꿔주세요.
-    icon: "", // 화면에 노출될 앱의 아이콘 이미지 주소로 바꿔주세요.
+    displayName: "루티팜",
+    primaryColor: "#E8722A",
+    icon: "https://static.toss.im/appsintoss/32883/bd7c6702-c143-47cb-a8f9-9518756084f5.png",
   },
   web: {
     host: "localhost",
