@@ -1,36 +1,44 @@
 import { colors } from "@toss/tds-colors";
 import { Button, List, ListRow, TextButton, Top } from "@toss/tds-mobile";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useBannerAd } from "../hooks/useBannerAd";
 import { useInAppAds } from "../hooks/useInAppAds";
 import { useTodayMission } from "../hooks/useTodayMission";
-import { type CharacterState, useRoutineStorage } from "../hooks/useRoutineStorage";
+import { useRoutineStorage } from "../hooks/useRoutineStorage";
+import { getPetStageInfo } from "../data/pets";
 import { type Mission } from "../data/missions";
 
 const BANNER_AD_ID = "ait-ad-test-banner-id";
 const REWARDED_AD_ID = "ait-ad-test-rewarded-id";
 
-const CHARACTER_INFO: Record<CharacterState, { emoji: string; label: string; bg: string }> = {
-  egg:      { emoji: "🥚", label: "알",       bg: colors.grey100 },
-  hatching: { emoji: "🐣", label: "부화 중",  bg: "#FFF9E6" },
-  chick:    { emoji: "🐥", label: "병아리",   bg: "#FFFDE7" },
-  chicken:  { emoji: "🐔", label: "성체",     bg: "#FFF3E0" },
-  hungry:   { emoji: "😢", label: "배고파요", bg: "#FFF0F0" },
-  fainted:  { emoji: "😵", label: "기절",     bg: "#F5F5F5" },
-};
-
 interface HomePageProps {
+  showMatureDialog: boolean;
+  onMatureDialogDismiss: () => void;
+  onGoToGacha: () => void;
   onMissionSelectOpen: () => void;
   onMissionStart: (mission: Mission) => void;
 }
 
-export function HomePage({ onMissionSelectOpen, onMissionStart }: HomePageProps) {
-  const { streak, character, missionDoneToday, loading, completeMission, feedCharacter } =
+export function HomePage({
+  showMatureDialog,
+  onMatureDialogDismiss,
+  onGoToGacha,
+  onMissionSelectOpen,
+  onMissionStart,
+}: HomePageProps) {
+  const { streak, growthStage, missionDoneToday, myPet, loading, feedCharacter } =
     useRoutineStorage();
   const { todayMission, loading: missionLoading } = useTodayMission();
 
-  const stage = CHARACTER_INFO[character];
-  const isHungry = character === "hungry" || character === "fainted";
+  const [isMatureDialogOpen, setMatureDialogOpen] = useState(showMatureDialog);
+
+  useEffect(() => {
+    if (showMatureDialog) setMatureDialogOpen(true);
+  }, [showMatureDialog]);
+
+  const hasPet = myPet != null;
+  const stage = getPetStageInfo(myPet, growthStage);
+  const isHungry = growthStage === "hungry" || growthStage === "fainted";
 
   // 배너 광고
   const { containerRef: bannerRef, isSupported: isBannerSupported } = useBannerAd(BANNER_AD_ID);
@@ -75,27 +83,42 @@ export function HomePage({ onMissionSelectOpen, onMissionStart }: HomePageProps)
             width: 120,
             height: 120,
             borderRadius: "50%",
-            backgroundColor: stage.bg,
+            backgroundColor: hasPet ? stage.bg : colors.grey100,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 64,
+            filter: hasPet ? "none" : "grayscale(1)",
+            transition: "background-color 0.3s ease",
           }}
         >
-          {stage.emoji}
-        </div>
-        <div
-          style={{
-            fontSize: 13,
-            color: colors.grey500,
-            fontWeight: 500,
-          }}
-        >
-          {stage.label}
+          {hasPet ? stage.emoji : "🥚"}
         </div>
 
-        {/* 광고 보고 캐릭터 밥 주기 — hungry/fainted 상태일 때만 표시 */}
-        {isHungry && (
+        <div style={{ fontSize: 13, color: colors.grey500, fontWeight: 500 }}>
+          {hasPet ? stage.label : "알"}
+        </div>
+
+        {/* 펫 없는 상태 안내 */}
+        {!hasPet && !isPageLoading && (
+          <div
+            style={{
+              padding: "12px 16px",
+              borderRadius: 12,
+              backgroundColor: colors.grey50,
+              fontSize: 13,
+              color: colors.grey600,
+              textAlign: "center",
+              lineHeight: 1.6,
+              maxWidth: 240,
+            }}
+          >
+            첫 미션을 완료하면 새로운 친구를 만날 수 있어요!
+          </div>
+        )}
+
+        {/* 광고 보고 캐릭터 밥 주기 — hungry/fainted 상태일 때만 */}
+        {hasPet && isHungry && (
           <Button
             size="small"
             color="dark"
@@ -121,32 +144,12 @@ export function HomePage({ onMissionSelectOpen, onMissionStart }: HomePageProps)
         }}
       >
         <div>
-          <div
-            style={{
-              fontSize: 13,
-              color: colors.grey500,
-              marginBottom: 4,
-            }}
-          >
+          <div style={{ fontSize: 13, color: colors.grey500, marginBottom: 4 }}>
             연속 달성 일수
           </div>
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: colors.grey900,
-              lineHeight: 1.4,
-            }}
-          >
+          <div style={{ fontSize: 28, fontWeight: 700, color: colors.grey900, lineHeight: 1.4 }}>
             {isPageLoading ? "-" : streak}
-            <span
-              style={{
-                fontSize: 16,
-                fontWeight: 500,
-                color: colors.grey500,
-                marginLeft: 4,
-              }}
-            >
+            <span style={{ fontSize: 16, fontWeight: 500, color: colors.grey500, marginLeft: 4 }}>
               일
             </span>
           </div>
@@ -196,13 +199,8 @@ export function HomePage({ onMissionSelectOpen, onMissionStart }: HomePageProps)
             }
           />
         ) : (
-          /* 미션 미선택 상태 */
           <div style={{ padding: "16px 24px" }}>
-            <TextButton
-              size="large"
-              color={colors.blue500}
-              onClick={onMissionSelectOpen}
-            >
+            <TextButton size="large" color={colors.blue500} onClick={onMissionSelectOpen}>
               미션 고르기 →
             </TextButton>
           </div>
@@ -220,12 +218,10 @@ export function HomePage({ onMissionSelectOpen, onMissionStart }: HomePageProps)
       {/* 하단 버튼 — 3가지 상태 */}
       <div style={{ padding: "0 24px", paddingBottom: isBannerSupported ? 80 : 32 }}>
         {missionDoneToday ? (
-          /* 완료 상태 */
           <Button size="large" style={{ width: "100%" }} disabled>
             오늘 미션 완료! ✓
           </Button>
         ) : todayMission != null ? (
-          /* 미션 선택됨 → 시작하기 */
           <Button
             size="large"
             style={{ width: "100%" }}
@@ -234,7 +230,7 @@ export function HomePage({ onMissionSelectOpen, onMissionStart }: HomePageProps)
           >
             미션 시작하기
           </Button>
-        ) : null /* 미션 미선택 → 버튼 숨김 */}
+        ) : null}
       </div>
 
       {/* 배너 광고 — 하단 고정 */}
@@ -252,6 +248,84 @@ export function HomePage({ onMissionSelectOpen, onMissionStart }: HomePageProps)
           justifyContent: "center",
         }}
       />
+
+      {/* 완전 성체 달성 다이얼로그 */}
+      {isMatureDialogOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "0 24px",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              padding: "32px 24px 24px",
+              width: "100%",
+              maxWidth: 360,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <div style={{ fontSize: 48 }}>🎉</div>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: colors.grey900,
+                textAlign: "center",
+                lineHeight: 1.4,
+              }}
+            >
+              완전 성체 달성!
+            </div>
+            <div
+              style={{
+                fontSize: 14,
+                color: colors.grey500,
+                textAlign: "center",
+                lineHeight: 1.6,
+                marginBottom: 8,
+              }}
+            >
+              14일 연속 달성을 축하해요!
+              <br />
+              새로운 친구를 만나볼까요?
+            </div>
+            <Button
+              size="large"
+              style={{ width: "100%", marginTop: 8 }}
+              onClick={() => {
+                setMatureDialogOpen(false);
+                onGoToGacha();
+              }}
+            >
+              새 펫 뽑기 (광고 보기)
+            </Button>
+            <Button
+              size="large"
+              color="dark"
+              variant="weak"
+              style={{ width: "100%" }}
+              onClick={() => {
+                setMatureDialogOpen(false);
+                onMatureDialogDismiss();
+              }}
+            >
+              이 아이와 계속하기
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

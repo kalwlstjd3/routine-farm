@@ -7,16 +7,18 @@ import { HomePage } from "./pages/HomePage";
 import { MissionListPage } from "./pages/MissionListPage";
 import { MissionSelectPage } from "./pages/MissionSelectPage";
 import { ONBOARDING_KEY, OnboardingPage } from "./pages/OnboardingPage";
+import { PetGachaPage } from "./pages/PetGachaPage";
 import { TimerPage } from "./pages/TimerPage";
 import { useEffect, useState } from "react";
 
 type Route =
   | { page: "loading" }
   | { page: "onboarding" }
-  | { page: "home" }
+  | { page: "home"; showMatureDialog?: boolean }
   | { page: "mission-select" }
   | { page: "missions" }
-  | { page: "timer"; mission: Mission };
+  | { page: "timer"; mission: Mission }
+  | { page: "pet-gacha" };
 
 function App() {
   const [route, setRoute] = useState<Route>({ page: "loading" });
@@ -64,17 +66,28 @@ function App() {
     return (
       <TimerPage
         mission={route.mission}
-        onComplete={() => {
-          completeMission();
-          setRoute({ page: "home" });
+        onComplete={async () => {
+          const { needsGacha, justMatured } = await completeMission();
+          if (needsGacha) {
+            setRoute({ page: "pet-gacha" });
+          } else {
+            setRoute({ page: "home", showMatureDialog: justMatured });
+          }
         }}
         onBack={() => setRoute({ page: "home" })}
       />
     );
   }
 
+  if (route.page === "pet-gacha") {
+    return <PetGachaPage onDone={() => setRoute({ page: "home" })} />;
+  }
+
   return (
     <HomePage
+      showMatureDialog={route.page === "home" ? (route.showMatureDialog ?? false) : false}
+      onMatureDialogDismiss={() => setRoute({ page: "home" })}
+      onGoToGacha={() => setRoute({ page: "pet-gacha" })}
       onMissionSelectOpen={() => setRoute({ page: "mission-select" })}
       onMissionStart={(mission) => setRoute({ page: "timer", mission })}
     />

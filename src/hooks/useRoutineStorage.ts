@@ -1,52 +1,55 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppStorage as Storage } from '../utils/storage';
+import { type GrowthStage } from '../data/pets';
+
+// GrowthStage는 pets.ts에서 정의하고 여기서 re-export
+export type { GrowthStage };
 
 const KEYS = {
   STREAK: 'streak',
   CHARACTER: 'character',
   MISSION_DONE: 'mission_done',
   LAST_FED: 'last_fed',
+  MY_PET: 'my_pet',
+  PET_CONFIRMED: 'pet_confirmed',
 } as const;
-
-export type CharacterState = 'egg' | 'hatching' | 'chick' | 'chicken' | 'hungry' | 'fainted';
 
 interface RoutineState {
   streak: number;
-  character: CharacterState;
+  growthStage: GrowthStage;
   missionDoneToday: boolean;
+  myPet: string | null;
 }
 
-function resolveCharacter(streak: number, daysSinceLastMission: number): CharacterState {
+function resolveGrowthStage(streak: number, daysSinceLastMission: number): GrowthStage {
   if (daysSinceLastMission >= 3) return 'fainted';
   if (daysSinceLastMission >= 1) return 'hungry';
-  if (streak >= 14) return 'chicken';
-  if (streak >= 7) return 'chick';
-  if (streak >= 3) return 'hatching';
-  return 'egg';
+  if (streak >= 14) return 'adult';
+  if (streak >= 7) return 'juvenile';
+  if (streak >= 3) return 'growing';
+  return 'initial';
 }
 
 function getTodayDate(): string {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
-/**
- * mission_done 값은 "YYYY-MM-DD" 형식으로 저장해요.
- * 오늘 날짜와 같으면 완료 상태, 다르면 미완료 상태예요.
- */
 export function useRoutineStorage() {
   const [state, setState] = useState<RoutineState>({
     streak: 0,
-    character: 'egg',
+    growthStage: 'initial',
     missionDoneToday: false,
+    myPet: null,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const [streakRaw, missionDoneRaw, lastFedRaw] = await Promise.all([
+      const [streakRaw, missionDoneRaw, lastFedRaw, myPetRaw] = await Promise.all([
         Storage.getItem(KEYS.STREAK),
         Storage.getItem(KEYS.MISSION_DONE),
         Storage.getItem(KEYS.LAST_FED),
+        Storage.getItem(KEYS.MY_PET),
       ]);
 
       const streak = streakRaw != null ? parseInt(streakRaw, 10) : 0;
@@ -65,65 +68,89 @@ export function useRoutineStorage() {
             (new Date(today).getTime() - new Date(lastFedRaw).getTime()) /
             (1000 * 60 * 60 * 24)
           );
-      // 미션 완료 또는 밥 주기 중 더 최근 활동 기준으로 캐릭터 상태 결정
       const daysSinceLastMission = Math.min(daysSinceMission, daysSinceFed);
 
-      const character = resolveCharacter(streak, daysSinceLastMission);
+      const growthStage = resolveGrowthStage(streak, daysSinceLastMission);
 
-      // 재계산한 캐릭터 상태를 Storage에도 반영
-      await Storage.setItem(KEYS.CHARACTER, character);
+      await Storage.setItem(KEYS.CHARACTER, growthStage);
 
-      setState({ streak, character, missionDoneToday });
+      setState({ streak, growthStage, missionDoneToday, myPet: myPetRaw });
       setLoading(false);
     }
 
     load();
   }, []);
 
-  const completeMission = useCallback(async () => {
+  /**
+   * 미션 완료 처리.
+   * needsGacha: 펫이 없어서 뽑기 화면으로 이동해야 하면 true
+   * justMatured: 이번 완료로 14일(완전 성체)을 달성했으면 true
+   */
+  const completeMission = useCallback(async (): Promise<{
+    needsGacha: boolean;
+    justMatured: boolean;
+  }> => {
     const today = getTodayDate();
 
-    // mission_done_date 로드해서 연속 일수 계산
-    const prevMissionDoneRaw = await Storage.getItem(KEYS.MISSION_DONE);
+    const [prevMissionDoneRaw, myPetRaw] = await Promise.all([
+      Storage.getItem(KEYS.MISSION_DONE),
+      Storage.getItem(KEYS.MY_PET),
+    ]);
+
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
     const prevStreak = state.streak;
     const newStreak = prevMissionDoneRaw === yesterdayStr
-      ? prevStreak + 1  // 어제 했으면 연속
+      ? prevStreak + 1
       : prevMissionDoneRaw === today
-        ? prevStreak     // 오늘 이미 했으면 유지
-        : 1;             // 끊겼으면 리셋
+        ? prevStreak
+        : 1;
 
-    const newCharacter = resolveCharacter(newStreak, 0);
+    const newGrowthStage = resolveGrowthStage(newStreak, 0);
+    const needsGacha = myPetRaw == null;
+    const justMatured = newStreak === 14 && !needsGacha;
 
     await Promise.all([
       Storage.setItem(KEYS.STREAK, String(newStreak)),
-      Storage.setItem(KEYS.CHARACTER, newCharacter),
+      Storage.setItem(KEYS.CHARACTER, newGrowthStage),
       Storage.setItem(KEYS.MISSION_DONE, today),
     ]);
 
-    setState({
+    setState((prev) => ({
+      ...prev,
       streak: newStreak,
-      character: newCharacter,
+      growthStage: newGrowthStage,
       missionDoneToday: true,
-    });
+    }));
+
+    return { needsGacha, justMatured };
   }, [state.streak]);
 
   /**
    * 광고 시청 보상으로 캐릭터에게 밥을 줘요.
-   * 스트릭은 유지하되 hungry/fainted 상태를 해제해요.
    */
   const feedCharacter = useCallback(async () => {
     const today = getTodayDate();
-    const newCharacter = resolveCharacter(state.streak, 0);
+    const newGrowthStage = resolveGrowthStage(state.streak, 0);
     await Promise.all([
-      Storage.setItem(KEYS.CHARACTER, newCharacter),
+      Storage.setItem(KEYS.CHARACTER, newGrowthStage),
       Storage.setItem(KEYS.LAST_FED, today),
     ]);
-    setState((prev) => ({ ...prev, character: newCharacter }));
+    setState((prev) => ({ ...prev, growthStage: newGrowthStage }));
   }, [state.streak]);
 
-  return { ...state, loading, completeMission, feedCharacter };
+  /**
+   * 펫 뽑기에서 펫을 확정해요.
+   */
+  const confirmPet = useCallback(async (petId: string) => {
+    await Promise.all([
+      Storage.setItem(KEYS.MY_PET, petId),
+      Storage.setItem(KEYS.PET_CONFIRMED, 'true'),
+    ]);
+    setState((prev) => ({ ...prev, myPet: petId }));
+  }, []);
+
+  return { ...state, loading, completeMission, feedCharacter, confirmPet };
 }
