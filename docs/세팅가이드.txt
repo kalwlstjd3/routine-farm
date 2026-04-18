@@ -1,0 +1,54 @@
+# 루티팜 개발 환경 세팅 가이드 (Windows 기준)
+
+## 사전 준비
+- Node.js LTS 버전 설치 (https://nodejs.org)
+- VSCode 설치
+- Git 설치
+
+## 1단계 — 프로젝트 클론 & 패키지 설치
+git clone https://github.com/kalwlstjd3/routine-farm
+cd routine-farm
+npm install
+
+## 2단계 — Claude Code 설치 & 로그인
+npm install -g @anthropic-ai/claude-code
+claude --version  ← 설치 확인
+claude            ← 실행 후 브라우저에서 로그인 (최초 1회)
+
+## 3단계 — Scoop 설치 (PowerShell에서 실행)
+※ Scoop이란?
+  윈도우용 패키지 매니저예요. 맥의 Homebrew와 같은 역할로,
+  명령어 한 줄로 프로그램을 쉽게 설치할 수 있게 해줘요.
+  ax를 설치하기 위해 필요해요.
+
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+
+## 4단계 — ax 설치 & Claude에 MCP 연결
+※ ax란?
+  토스(앱인토스)에서 만든 개발 도구예요.
+  Claude Code가 앱인토스 SDK 기능을 알고 사용할 수 있도록
+  연결해주는 역할을 해요.
+
+※ MCP(Model Context Protocol)란?
+  Claude Code가 외부 도구(ax)와 소통할 수 있게 해주는 연결 방식이에요.
+  이 설정을 해야 Claude Code가 앱인토스 관련 코드를 더 잘 이해하고 작성해줘요.
+
+scoop bucket add toss https://github.com/toss/scoop-bucket.git
+scoop install ax
+claude mcp add --transport stdio apps-in-toss ax mcp start
+
+## 5단계 — 개발 서버 실행
+npm run dev
+→ 브라우저에서 http://localhost:5173 접속
+
+## 빌드 & 배포
+npm run build
+→ routine-farm.ait 파일 생성
+→ 앱인토스 콘솔(console.apps-in-toss.toss.im)에 업로드
+
+## 참고
+- CLAUDE.md: 앱 기획 및 개발 컨텍스트
+- docs/테스트시나리오.txt: 테스트 시나리오
+- 브라우저 개발 환경에서는 광고 기능 비활성화 (토스앱/샌드박스에서만 동작)
+- localStorage.clear() 후 새로고침하면 온보딩부터 재시작

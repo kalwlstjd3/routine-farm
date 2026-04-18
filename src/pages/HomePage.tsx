@@ -8,8 +8,8 @@ import { useRoutineStorage } from "../hooks/useRoutineStorage";
 import { getPetStageInfo } from "../data/pets";
 import { type Mission } from "../data/missions";
 
-const BANNER_AD_ID = "ait-ad-test-banner-id";
-const REWARDED_AD_ID = "ait-ad-test-rewarded-id";
+const BANNER_AD_ID = "ait.v2.live.15f9584f940c4e21";
+const REWARDED_AD_ID = "ait.v2.live.36d7a610d1764bc2";
 
 interface HomePageProps {
   showMatureDialog: boolean;

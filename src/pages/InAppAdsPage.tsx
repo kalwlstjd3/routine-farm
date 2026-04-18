@@ -3,9 +3,8 @@ import { Button, List, ListRow, TextButton, Top } from "@toss/tds-mobile";
 
 import { useInAppAds } from "../hooks/useInAppAds";
 
-// TODO: 서비스를 출시하기 전에 앱인토스 콘솔에서 발급한 광고그룹ID로 변경해주세요.
-const TEST_INTERSTITIAL_ID = "ait-ad-test-interstitial-id";
-const TEST_REWARDED_ID = "ait-ad-test-rewarded-id";
+const TEST_INTERSTITIAL_ID = "ait.v2.live.36d7a610d1764bc2";
+const TEST_REWARDED_ID = "ait.v2.live.36d7a610d1764bc2";
 
 interface InAppAdsPageProps {
   onBack: () => void;
