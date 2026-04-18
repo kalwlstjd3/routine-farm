@@ -9,7 +9,7 @@ import { getPetStageInfo } from "../data/pets";
 import { type Mission } from "../data/missions";
 import { DevPanel } from "../components/DevPanel";
 
-const BANNER_AD_ID = "ait.v2.live.15f9584f940c4e21";
+const BANNER_AD_ID = "ait-ad-test-banner-id"; // TODO: 테스트 후 "ait.v2.live.15f9584f940c4e21" 으로 복원
 const REWARDED_AD_ID = "ait.v2.live.36d7a610d1764bc2";
 
 interface HomePageProps {

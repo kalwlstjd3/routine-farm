@@ -5,7 +5,7 @@ import { GoogleAdMob, loadFullScreenAd, TossAds } from '@apps-in-toss/web-framew
 import { AppStorage } from '../utils/storage';
 import { clearConsoleLogs, subscribeConsoleLogs, type CapturedLog } from '../utils/consoleCapture';
 
-const BANNER_AD_ID = 'ait.v2.live.15f9584f940c4e21';
+const BANNER_AD_ID = 'ait-ad-test-banner-id'; // TODO: 테스트 후 'ait.v2.live.15f9584f940c4e21' 으로 복원
 const REWARDED_AD_ID = 'ait.v2.live.36d7a610d1764bc2';
 
 function todayStr() {
