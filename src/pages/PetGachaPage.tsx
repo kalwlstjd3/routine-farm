@@ -3,6 +3,9 @@ import { Button, Top } from '@toss/tds-mobile';
 import { useEffect, useState } from 'react';
 import { getRandomPet, type PetDefinition } from '../data/pets';
 import { useRoutineStorage } from '../hooks/useRoutineStorage';
+import { useInAppAds } from '../hooks/useInAppAds';
+
+const REWARDED_AD_ID = 'ait.v2.live.36d7a610d1764bc2';
 
 interface PetGachaPageProps {
   onDone: () => void;
@@ -14,6 +17,8 @@ export function PetGachaPage({ onDone }: PetGachaPageProps) {
   const [drawnPet, setDrawnPet] = useState<PetDefinition | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
 
+  const { showAd, isAdLoaded, isSupported: isAdSupported, lastReward } = useInAppAds(REWARDED_AD_ID);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDrawnPet(getRandomPet());
@@ -22,8 +27,20 @@ export function PetGachaPage({ onDone }: PetGachaPageProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  function handleReroll() {
-    setDrawnPet(getRandomPet());
+  // 광고 시청 보상 후 다시 뽑기
+  useEffect(() => {
+    if (lastReward != null) {
+      setDrawnPet(getRandomPet());
+    }
+  }, [lastReward]);
+
+  function handleRerollClick() {
+    if (isAdSupported) {
+      showAd();
+    } else {
+      // 브라우저 환경: 광고 없이 바로 다시 뽑기
+      setDrawnPet(getRandomPet());
+    }
   }
 
   async function handleConfirm() {
@@ -34,6 +51,7 @@ export function PetGachaPage({ onDone }: PetGachaPageProps) {
   }
 
   const initialStage = drawnPet?.stages.initial;
+  const isRerollLoading = isAdSupported && !isAdLoaded;
 
   return (
     <>
@@ -129,8 +147,9 @@ export function PetGachaPage({ onDone }: PetGachaPageProps) {
           color="dark"
           variant="weak"
           style={{ width: '100%' }}
-          disabled={isLoading || isConfirming}
-          onClick={handleReroll}
+          disabled={isLoading || isConfirming || isRerollLoading}
+          loading={isRerollLoading}
+          onClick={handleRerollClick}
         >
           다시 뽑기 (광고 보기)
         </Button>

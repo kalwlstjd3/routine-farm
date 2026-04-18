@@ -7,6 +7,7 @@ import { useTodayMission } from "../hooks/useTodayMission";
 import { useRoutineStorage } from "../hooks/useRoutineStorage";
 import { getPetStageInfo } from "../data/pets";
 import { type Mission } from "../data/missions";
+import { DevPanel } from "../components/DevPanel";
 
 const BANNER_AD_ID = "ait.v2.live.15f9584f940c4e21";
 const REWARDED_AD_ID = "ait.v2.live.36d7a610d1764bc2";
@@ -40,16 +41,24 @@ export function HomePage({
   const stage = getPetStageInfo(myPet, growthStage);
   const isHungry = growthStage === "hungry" || growthStage === "fainted";
 
+  // 밥 주기 버튼 표시 여부 — 미션 완료와 무관하게, 밥 주기 완료 후에만 사라짐
+  const [needsFeeding, setNeedsFeeding] = useState(false);
+  useEffect(() => {
+    if (!loading) setNeedsFeeding(hasPet && isHungry);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
   // 배너 광고
-  const { containerRef: bannerRef, isSupported: isBannerSupported } = useBannerAd(BANNER_AD_ID);
+  const { containerRef: bannerRef, isSupported: isBannerSupported, logs: bannerLogs } = useBannerAd(BANNER_AD_ID);
 
   // 보상형 광고 (밥 주기)
-  const { showAd: showRewardedAd, lastReward } = useInAppAds(REWARDED_AD_ID);
+  const { showAd: showRewardedAd, isAdLoaded: isRewardedAdLoaded, isSupported: isRewardedAdSupported, lastReward, logs: rewardedLogs } = useInAppAds(REWARDED_AD_ID);
 
   // 보상 지급 시 캐릭터 밥 주기
   useEffect(() => {
     if (lastReward != null) {
       feedCharacter();
+      setNeedsFeeding(false);
     }
   }, [lastReward]);
 
@@ -117,13 +126,15 @@ export function HomePage({
           </div>
         )}
 
-        {/* 광고 보고 캐릭터 밥 주기 — hungry/fainted 상태일 때만 */}
-        {hasPet && isHungry && (
+        {/* 광고 보고 캐릭터 밥 주기 — 밥 주기 완료 전까지 유지 */}
+        {hasPet && needsFeeding && (
           <Button
             size="small"
             color="dark"
             variant="weak"
             onClick={showRewardedAd}
+            disabled={isRewardedAdSupported && !isRewardedAdLoaded}
+            loading={isRewardedAdSupported && !isRewardedAdLoaded}
             style={{ marginTop: 4 }}
           >
             📺 광고 보고 캐릭터 밥 주기
@@ -233,7 +244,10 @@ export function HomePage({
         ) : null}
       </div>
 
-      {/* 배너 광고 — 하단 고정 */}
+      {/* 개발자 테스트 패널 — TODO: 출시 전 제거 예정 */}
+      <DevPanel bannerLogs={bannerLogs} rewardedLogs={rewardedLogs} />
+
+      {/* 배너 광고 — 하단 고정 (height/backgroundColor는 hook이 제어) */}
       <div
         ref={bannerRef}
         style={{
@@ -241,11 +255,7 @@ export function HomePage({
           bottom: 0,
           left: 0,
           right: 0,
-          minHeight: isBannerSupported ? 50 : 0,
-          backgroundColor: isBannerSupported ? colors.grey50 : "transparent",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: isBannerSupported ? "block" : "none",
         }}
       />
 

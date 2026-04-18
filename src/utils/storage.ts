@@ -28,4 +28,12 @@ export const AppStorage = {
     }
     return Storage.setItem(key, value);
   },
+
+  async removeItem(key: string): Promise<void> {
+    if (isLocalEnv()) {
+      localStorage.removeItem(key);
+      return;
+    }
+    return Storage.removeItem(key);
+  },
 };

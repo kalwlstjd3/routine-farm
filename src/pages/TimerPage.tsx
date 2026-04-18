@@ -2,6 +2,9 @@ import { colors } from '@toss/tds-colors';
 import { Button, TextButton, Top } from '@toss/tds-mobile';
 import { useEffect, useRef, useState } from 'react';
 import { type Mission } from '../data/missions';
+import { useBannerAd } from '../hooks/useBannerAd';
+
+const BANNER_AD_ID = 'ait.v2.live.15f9584f940c4e21';
 
 const TOTAL_SECONDS = 60;
 const RADIUS = 54;
@@ -17,6 +20,7 @@ export function TimerPage({ mission, onComplete, onBack }: TimerPageProps) {
   const [secondsLeft, setSecondsLeft] = useState(TOTAL_SECONDS);
   const [isDone, setIsDone] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { containerRef: bannerRef, isSupported: isBannerSupported } = useBannerAd(BANNER_AD_ID);
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
@@ -128,7 +132,7 @@ export function TimerPage({ mission, onComplete, onBack }: TimerPageProps) {
       </div>
 
       {/* 완료하기 버튼 */}
-      <div style={{ padding: '0 24px 32px' }}>
+      <div style={{ padding: '0 24px', paddingBottom: isBannerSupported ? 80 : 32 }}>
         <Button
           size="large"
           style={{ width: '100%' }}
@@ -138,6 +142,18 @@ export function TimerPage({ mission, onComplete, onBack }: TimerPageProps) {
           완료하기 ✓
         </Button>
       </div>
+
+      {/* 배너 광고 — 토스앱 환경에서만 노출 (height/backgroundColor는 hook이 제어) */}
+      <div
+        ref={bannerRef}
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: isBannerSupported ? 'block' : 'none',
+        }}
+      />
     </>
   );
 }
