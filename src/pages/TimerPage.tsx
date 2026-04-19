@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { type Mission } from '../data/missions';
 import { useBannerAd } from '../hooks/useBannerAd';
 
-const BANNER_AD_ID = 'ait-ad-test-banner-id';
+const BANNER_AD_ID = 'ait.v2.live.15f9584f940c4e21';
 
 const TOTAL_SECONDS = 60;
 const RADIUS = 54;
