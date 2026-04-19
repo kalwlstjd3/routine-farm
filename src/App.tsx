@@ -45,10 +45,21 @@ function App() {
     }
   }, []);
 
-  // 앱 최초 진입 시 온보딩 완료 여부 확인
+  // 앱 최초 진입 시 온보딩 완료 여부 + 딥링크 경로 처리
+  // intoss://routine-farm/home → pathname "/home"
   useEffect(() => {
+    const pathname = window.location.pathname;
     Storage.getItem(ONBOARDING_KEY).then((val) => {
-      setRoute({ page: val === "true" ? "home" : "onboarding" });
+      const onboardingDone = val === "true";
+      if (!onboardingDone) {
+        setRoute({ page: "onboarding" });
+        return;
+      }
+      if (pathname === "/home" || pathname === "/" || pathname === "") {
+        setRoute({ page: "home" });
+      } else {
+        setRoute({ page: "home" });
+      }
     });
   }, []);
 
