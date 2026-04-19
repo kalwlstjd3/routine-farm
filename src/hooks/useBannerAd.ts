@@ -1,7 +1,7 @@
 import { TossAds } from '@apps-in-toss/web-framework';
 import { useLayoutEffect, useRef, useState } from 'react';
 
-export function useBannerAd(adGroupId: string) {
+export function useBannerAd(adGroupId: string, isInitialized: boolean) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isSupported, setIsSupported] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
@@ -16,6 +16,11 @@ export function useBannerAd(adGroupId: string) {
   // useLayoutEffect: 브라우저 페인트 전에 DOM 크기를 확정하고 SDK 호출
   useLayoutEffect(() => {
     const log = (msg: string) => addLogRef.current(msg);
+
+    if (!isInitialized) {
+      log('TossAds 미초기화 → attachBanner 대기 중...');
+      return;
+    }
 
     let supported = false;
     try {
@@ -32,9 +37,8 @@ export function useBannerAd(adGroupId: string) {
       // SDK 호출 전 크기·표시 강제 설정 (배경색은 투명)
       el.style.display = 'block';
       el.style.width = '100%';
-      el.style.height = '50px';
-      el.style.minHeight = '50px';
-      el.style.overflow = 'hidden';
+      el.style.height = '96px';
+      el.style.minHeight = '96px';
       el.style.backgroundColor = 'transparent';
 
       try {
@@ -42,8 +46,8 @@ export function useBannerAd(adGroupId: string) {
           callbacks: {
             onAdRendered: (payload) => {
               log(`onAdRendered ✓ slotId=${payload.slotId}`);
-              // 광고 렌더 성공 — 컨테이너 표시 유지
-              el.style.height = '50px';
+              el.style.height = '96px';
+              el.style.minHeight = '96px';
               el.style.display = 'block';
             },
             onAdFailedToRender: (payload) => {
@@ -77,7 +81,7 @@ export function useBannerAd(adGroupId: string) {
         // cleanup 실패 시 무시
       }
     };
-  }, [adGroupId]);
+  }, [adGroupId, isInitialized]);
 
   return { containerRef, isSupported, logs };
 }

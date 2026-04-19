@@ -5,7 +5,10 @@
       "Bash(grep -E \"\\\\.d\\\\.ts$\")",
       "Bash(grep -v \"^--$\")",
       "Bash(npx tsc *)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(npm run *)",
+      "Bash(rm \"C:\\\\Users\\\\YJS\\\\Desktop\\\\Yoonjs\\\\Project\\\\routine-farm\\\\src\\\\components\\\\DevPanel.tsx\")",
+      "Bash(rm \"C:\\\\Users\\\\YJS\\\\Desktop\\\\Yoonjs\\\\Project\\\\routine-farm\\\\src\\\\utils\\\\consoleCapture.ts\")"
     ]
   }
 }

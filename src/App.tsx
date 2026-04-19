@@ -1,4 +1,5 @@
 import "./App.css";
+import { TossAds } from "@apps-in-toss/web-framework";
 import { AppStorage as Storage } from "./utils/storage";
 import { type Mission } from "./data/missions";
 import { useRoutineStorage } from "./hooks/useRoutineStorage";
@@ -22,8 +23,27 @@ type Route =
 
 function App() {
   const [route, setRoute] = useState<Route>({ page: "loading" });
+  const [isAdsInitialized, setIsAdsInitialized] = useState(false);
   const { completeMission } = useRoutineStorage();
   const { todayMission, saveTodayMission } = useTodayMission();
+
+  // TossAds SDK 초기화 — attachBanner 전에 반드시 한 번만 호출
+  useEffect(() => {
+    try {
+      TossAds.initialize({
+        callbacks: {
+          onInitialized: () => {
+            setIsAdsInitialized(true);
+          },
+          onInitializationFailed: (error) => {
+            console.error('TossAds SDK 초기화 실패:', error);
+          },
+        },
+      });
+    } catch {
+      // 브라우저 환경에서는 정상적으로 실패
+    }
+  }, []);
 
   // 앱 최초 진입 시 온보딩 완료 여부 확인
   useEffect(() => {
@@ -65,6 +85,7 @@ function App() {
   if (route.page === "timer") {
     return (
       <TimerPage
+        isAdsInitialized={isAdsInitialized}
         mission={route.mission}
         onComplete={async () => {
           const { needsGacha, justMatured } = await completeMission();
@@ -85,6 +106,7 @@ function App() {
 
   return (
     <HomePage
+      isAdsInitialized={isAdsInitialized}
       showMatureDialog={route.page === "home" ? (route.showMatureDialog ?? false) : false}
       onMatureDialogDismiss={() => setRoute({ page: "home" })}
       onGoToGacha={() => setRoute({ page: "pet-gacha" })}

@@ -7,12 +7,11 @@ import { useTodayMission } from "../hooks/useTodayMission";
 import { useRoutineStorage } from "../hooks/useRoutineStorage";
 import { getPetStageInfo } from "../data/pets";
 import { type Mission } from "../data/missions";
-import { DevPanel } from "../components/DevPanel";
-
-const BANNER_AD_ID = "ait-ad-test-banner-id"; // TODO: 테스트 후 "ait.v2.live.15f9584f940c4e21" 으로 복원
+const BANNER_AD_ID = "ait-ad-test-banner-id";
 const REWARDED_AD_ID = "ait.v2.live.36d7a610d1764bc2";
 
 interface HomePageProps {
+  isAdsInitialized: boolean;
   showMatureDialog: boolean;
   onMatureDialogDismiss: () => void;
   onGoToGacha: () => void;
@@ -21,6 +20,7 @@ interface HomePageProps {
 }
 
 export function HomePage({
+  isAdsInitialized,
   showMatureDialog,
   onMatureDialogDismiss,
   onGoToGacha,
@@ -49,10 +49,10 @@ export function HomePage({
   }, [loading]);
 
   // 배너 광고
-  const { containerRef: bannerRef, isSupported: isBannerSupported, logs: bannerLogs } = useBannerAd(BANNER_AD_ID);
+  const { containerRef: bannerRef, isSupported: isBannerSupported } = useBannerAd(BANNER_AD_ID, isAdsInitialized);
 
   // 보상형 광고 (밥 주기)
-  const { showAd: showRewardedAd, isAdLoaded: isRewardedAdLoaded, isSupported: isRewardedAdSupported, lastReward, logs: rewardedLogs } = useInAppAds(REWARDED_AD_ID);
+  const { showAd: showRewardedAd, isAdLoaded: isRewardedAdLoaded, isSupported: isRewardedAdSupported, lastReward } = useInAppAds(REWARDED_AD_ID);
 
   // 보상 지급 시 캐릭터 밥 주기
   useEffect(() => {
@@ -227,7 +227,7 @@ export function HomePage({
       )}
 
       {/* 하단 버튼 — 3가지 상태 */}
-      <div style={{ padding: "0 24px", paddingBottom: isBannerSupported ? 80 : 32 }}>
+      <div style={{ padding: "0 24px", paddingBottom: isBannerSupported ? 112 : 32 }}>
         {missionDoneToday ? (
           <Button size="large" style={{ width: "100%" }} disabled>
             오늘 미션 완료! ✓
@@ -243,9 +243,6 @@ export function HomePage({
           </Button>
         ) : null}
       </div>
-
-      {/* 개발자 테스트 패널 — TODO: 출시 전 제거 예정 */}
-      <DevPanel bannerLogs={bannerLogs} rewardedLogs={rewardedLogs} />
 
       {/* 배너 광고 — 하단 고정 (height/backgroundColor는 hook이 제어) */}
       <div

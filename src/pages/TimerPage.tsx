@@ -4,23 +4,24 @@ import { useEffect, useRef, useState } from 'react';
 import { type Mission } from '../data/missions';
 import { useBannerAd } from '../hooks/useBannerAd';
 
-const BANNER_AD_ID = 'ait-ad-test-banner-id'; // TODO: 테스트 후 'ait.v2.live.15f9584f940c4e21' 으로 복원
+const BANNER_AD_ID = 'ait-ad-test-banner-id';
 
 const TOTAL_SECONDS = 60;
 const RADIUS = 54;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 interface TimerPageProps {
+  isAdsInitialized: boolean;
   mission: Mission;
   onComplete: () => void;
   onBack: () => void;
 }
 
-export function TimerPage({ mission, onComplete, onBack }: TimerPageProps) {
+export function TimerPage({ isAdsInitialized, mission, onComplete, onBack }: TimerPageProps) {
   const [secondsLeft, setSecondsLeft] = useState(TOTAL_SECONDS);
   const [isDone, setIsDone] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const { containerRef: bannerRef, isSupported: isBannerSupported } = useBannerAd(BANNER_AD_ID);
+  const { containerRef: bannerRef, isSupported: isBannerSupported } = useBannerAd(BANNER_AD_ID, isAdsInitialized);
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
@@ -132,7 +133,7 @@ export function TimerPage({ mission, onComplete, onBack }: TimerPageProps) {
       </div>
 
       {/* 완료하기 버튼 */}
-      <div style={{ padding: '0 24px', paddingBottom: isBannerSupported ? 80 : 32 }}>
+      <div style={{ padding: '0 24px', paddingBottom: isBannerSupported ? 112 : 32 }}>
         <Button
           size="large"
           style={{ width: '100%' }}
